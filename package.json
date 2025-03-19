@@ -1,13 +1,16 @@
 {
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "mongodb": "^6.15.0",
+    "mongoose": "^8.12.1"
   },
   "name": "retailstoreback",
   "version": "1.0.0",
   "main": "nodemmon dist/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon src/main.ts",
+    "start:dev": "nodemon src/main.ts",
+    "start": "node dist/main.js",
     "build": "tsc --build"
   },
   "author": "Dimitris Tramantzas",
