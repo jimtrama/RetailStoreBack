@@ -45,7 +45,7 @@ router.put(
   "/update",
   isIdorEmailChain(),
   checkEmail(),
-  body("email").isEmpty().withMessage("You can't update the email"),
+  body("email").not().exists().withMessage("You can't update the email"),
   updateCustomer
 );
 

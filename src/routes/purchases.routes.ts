@@ -15,7 +15,7 @@ router.get("/one",
   header("id").notEmpty(),
   getPurchase);
 router.post("/new",
-  body("email").notEmpty(),
+  body("email").notEmpty().isEmail(),
   body("products")
     .notEmpty()
     .custom((products) => {
