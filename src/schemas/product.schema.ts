@@ -7,9 +7,21 @@ const productSchema = new Schema(
       unique:true,
       required: [true, "Error title is required"],
     },
+    imgLink:{
+      type: String,
+      default: "",
+    },
+    details: {
+      type: String,
+      default: "",
+    },
     price: {
       type: Number,
       required: true,
+      default: 0,
+    },
+    stock: {
+      type: Number,
       default: 0,
     },
   },

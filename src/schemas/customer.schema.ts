@@ -8,11 +8,16 @@ const customerSchema = new Schema(
     },
     lastName: {
       type: String,
+      required: [true, "Error first name is required"],
     },
     email: {
       type: String,
       unique: true,
       required: [true, "Error email is required"],
+    },
+    password: {
+      type: String,
+      required: [true, "Error password is required"],
     },
     points: {
       type: Number,

@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import Customer from "../schemas/customer.schema";
 import Purchase from "../schemas/purchase.schema";
+import { validationResult } from "express-validator";
+import crypto from 'crypto';
 
 export async function getAll(req: Request, res: Response) {
   try {
@@ -13,23 +15,23 @@ export async function getAll(req: Request, res: Response) {
 
 export async function getCustomer(req: Request, res: Response) {
   try {
-    const email = req.headers["email"];
-    const id = req.headers["id"];
-    if (!email && !id) {
-      res.status(300).json({ message: `email or id must be present` });
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      res.status(300).json({ errors: result.array() });
       return;
     }
+    const email = req.headers["email"];
+    const id = req.headers["id"];
     let customer;
     if (!!id) {
       customer = await Customer.findById(id);
     } else {
       customer = (await Customer.find({ email }))[0];
-      if(!customer){
+      if (!customer) {
         res.status(300).json({ message: `user not found` });
-      return;
+        return;
       }
     }
-
     res.status(200).json(customer);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -38,6 +40,14 @@ export async function getCustomer(req: Request, res: Response) {
 
 export async function createCustomer(req: Request, res: Response) {
   try {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      res.status(300).json({ errors: result.array() });
+      return;
+    }
+    const shasum = crypto.createHash('sha1')
+    shasum.update(req.body["password"])
+    req.body["password"] = shasum.digest('hex')
     const customer = await Customer.create(req.body);
     res.status(200).json(customer);
   } catch (error: any) {
@@ -47,24 +57,28 @@ export async function createCustomer(req: Request, res: Response) {
 
 export async function updateCustomer(req: Request, res: Response) {
   try {
-    const email = req.body["email"];
-    const values = req.body["values"];
-
-    if (!email || !values) {
-      res.status(300).json({ message: `email and values must be present` });
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      res.status(300).json({ errors: result.array() });
       return;
     }
 
-    if (Object.keys(values)?.includes("email")) {
-      res.status(300).json({ message: `sorry email shoudn't be updated` });
-      return;
-    }
+    const values = req.body;
+    const email = req.headers["email"];
+    const id = req.headers["id"];
 
-    const customer = await Customer.findOneAndUpdate({ email }, values);
+    let customer;
+    if (!!id) {
+      customer = await Customer.findOneAndUpdate({_id:id},values);
+    }else if(!!email){
+      customer = await Customer.findOne({ email });
+    }
+    
     if (!customer) {
-      res.status(300).json({ message: `user with email ${email} not found` });
+      res.status(300).json({ message: `user not found` });
       return;
     }
+
     res.status(200).json(customer);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -73,17 +87,28 @@ export async function updateCustomer(req: Request, res: Response) {
 
 export async function deleteCustomer(req: Request, res: Response) {
   try {
-    const email = req.body["email"];
-    if (!email) {
-      res.status(300).json({ message: `email must be present` });
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      res.status(300).json({ errors: result.array() });
       return;
     }
-    const customer = await Customer.findOneAndDelete({ email });
-    if (!customer) {
-      res.status(300).json({ message: `user with email ${email} not found` });
-      return;
+    const email = req.headers["email"];
+    const id = req.headers["id"];
+    if (!!id) {
+      const customer = await Customer.findByIdAndDelete(id);
+      if (!!customer) {
+        res.status(200).json(customer);
+        return;
+      }
     }
-    res.status(200).json(customer);
+    if (!!email) {
+      const customer = await Customer.findOneAndDelete({ email });
+      if (!!customer) {
+        res.status(200).json(customer);
+        return;
+      }
+    }
+    res.status(300).json({ message: `user with email ${email} not found` });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -92,22 +117,31 @@ export async function deleteCustomer(req: Request, res: Response) {
 //Delete Customer and his relative Purchases
 export async function deepDeleteCustomer(req: Request, res: Response) {
   try {
-    const email = req.body["email"];
-    if (!email) {
-      res.status(300).json({ message: `email must be present` });
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      res.status(300).json({ errors: result.array() });
       return;
     }
-    const customer = await Customer.findOne({ email });
+    const email = req.headers["email"];
+    const id = req.headers["id"];
+    let customer;
+    if (!!id) {
+      customer = await Customer.findById(id);
+    }else if(!!email){
+      customer = await Customer.findOne({ email });
+    }
+    
     if (!customer) {
-      res.status(300).json({ message: `user with email ${email} not found` });
+      res.status(300).json({ message: `user not found` });
       return;
     }
-    let r;
-    do {
-      r = await Purchase.findOneAndDelete({ email });
-    } while (!!r);
 
-    const deletedC = await Customer.findOneAndDelete({ email });
+    let purchase;
+    do {
+      purchase = await Purchase.findOneAndDelete({ email:customer.email });
+    } while (!!purchase);
+
+    const deletedC = await Customer.findOneAndDelete({ email:customer.email });
     res.status(200).json(deletedC);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
