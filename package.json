@@ -11,7 +11,7 @@
   "main": "nodemmon dist/main.js",
   "scripts": {
     "start:dev": "nodemon src/main.ts",
-    "start": "node dist/main.js",
+    "start": "node --env-file=.env dist/main.js",
     "build": "tsc --build"
   },
   "author": "Dimitris Tramantzas",

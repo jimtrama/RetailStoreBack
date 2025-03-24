@@ -5,7 +5,7 @@ import purchasesRoutes from "./routes/purchases.routes";
 import mongoose from "mongoose";
 const app = express();
 const port = 3000;
-const pass = "";
+const pass = process.env["DB_PASS"];
 const uri = `mongodb+srv://admin:${pass}@main.40cm2.mongodb.net/?retryWrites=true&w=majority&appName=main`;
 
 app.use(express.json());
